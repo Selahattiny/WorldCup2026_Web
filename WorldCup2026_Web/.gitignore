@@ -1,0 +1,14 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.lock.json
+*.db
+
+# Node (kullandıysan)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

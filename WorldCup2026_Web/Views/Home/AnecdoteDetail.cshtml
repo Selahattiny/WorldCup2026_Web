@@ -1,0 +1,408 @@
+﻿@model WorldCup2026_Web.Models.Anecdote
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    /* ══════════════════════════════════════
+           SAYFA
+        ══════════════════════════════════════ */
+    .anecdote-page {
+        max-width: 920px;
+        margin: 0 auto;
+        padding-bottom: 48px;
+    }
+
+    .anecdote-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #00c6ff;
+        text-decoration: none;
+        margin-bottom: 18px;
+        transition: gap 0.15s;
+    }
+
+        .anecdote-back:hover {
+            gap: 9px;
+            color: #00c6ff;
+        }
+
+    /* ══════════════════════════════════════
+           HERO GÖRSEL
+        ══════════════════════════════════════ */
+    .anecdote-hero {
+        position: relative;
+        height: 340px;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .anecdote-hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Karartma + alt gradient */
+    .anecdote-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(8,12,20,0.15) 0%, rgba(8,12,20,0.55) 55%, rgba(8,12,20,0.92) 100%);
+    }
+
+    /* Üst-sol: yıl rozeti */
+    .hero-year-badge {
+        position: absolute;
+        top: 20px;
+        left: 22px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 198, 255, 0.12);
+        border: 1px solid rgba(0, 198, 255, 0.28);
+        color: #00c6ff;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 20px;
+        backdrop-filter: blur(6px);
+    }
+
+    /* Üst-sağ: kategori rozeti */
+    .hero-tag-badge {
+        position: absolute;
+        top: 20px;
+        right: 22px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(246, 166, 35, 0.12);
+        border: 1px solid rgba(246, 166, 35, 0.28);
+        color: #f6a623;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        padding: 6px 14px;
+        border-radius: 20px;
+        backdrop-filter: blur(6px);
+    }
+
+    /* Alt: başlık */
+    .hero-title-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        padding: 28px 32px;
+    }
+
+    .hero-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.2;
+        text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+    }
+
+    .hero-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    .hero-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #b8c2d8;
+        font-weight: 500;
+    }
+
+        .hero-meta-item i {
+            color: #00c6ff;
+            font-size: 12px;
+        }
+
+    /* ══════════════════════════════════════
+           İÇERİK KARTI
+        ══════════════════════════════════════ */
+    .anecdote-content {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 22px;
+        margin-top: -32px;
+        position: relative;
+        z-index: 3;
+        padding: 36px 40px;
+    }
+
+    .content-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .content-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: rgba(0, 198, 255, 0.1);
+        border: 1px solid rgba(0, 198, 255, 0.2);
+        color: #00c6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .content-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .content-sub {
+        font-size: 11px;
+        color: #3a4255;
+        margin: 1px 0 0;
+        font-weight: 500;
+    }
+
+    /* Hikaye metni */
+    .anecdote-text {
+        font-size: 15.5px;
+        line-height: 2;
+        color: #aab4cc;
+        letter-spacing: 0.2px;
+        text-align: justify;
+        margin: 0;
+    }
+
+        /* İlk harf büyütme (drop cap) */
+        .anecdote-text::first-letter {
+            font-size: 56px;
+            font-weight: 800;
+            color: #00c6ff;
+            float: left;
+            line-height: 0.9;
+            margin: 6px 10px 0 0;
+            font-family: Georgia, serif;
+        }
+
+    /* ══════════════════════════════════════
+           ALT: PAYLAŞ + NAVİGASYON
+        ══════════════════════════════════════ */
+    .anecdote-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 24px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .footer-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .footer-tag {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a5568;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 5px 12px;
+        border-radius: 20px;
+    }
+
+    .footer-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #00c6ff;
+        text-decoration: none;
+        transition: gap 0.15s;
+    }
+
+        .footer-back-link:hover {
+            gap: 9px;
+            color: #00c6ff;
+        }
+
+    /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
+    @@media (max-width: 720px) {
+        .anecdote-hero {
+            height: 240px;
+            border-radius: 18px;
+        }
+
+        .hero-title {
+            font-size: 22px;
+        }
+
+        .hero-title-wrap {
+            padding: 18px 20px;
+        }
+
+        .hero-year-badge, .hero-tag-badge {
+            top: 14px;
+            font-size: 10px;
+            padding: 4px 10px;
+        }
+
+        .hero-year-badge {
+            left: 14px;
+        }
+
+        .hero-tag-badge {
+            right: 14px;
+        }
+
+        .anecdote-content {
+            padding: 24px 22px;
+            margin-top: -24px;
+            border-radius: 18px;
+        }
+
+        .anecdote-text {
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+            .anecdote-text::first-letter {
+                font-size: 42px;
+                margin: 4px 8px 0 0;
+            }
+
+        .content-title {
+            font-size: 15px;
+        }
+    }
+</style>
+
+<div class="container mt-4 anecdote-page">
+
+    <a asp-action="Anecdotes" class="anecdote-back">
+        <i class="bi bi-arrow-left"></i> Listeye Geri Dön
+    </a>
+
+    <!-- ══ HERO ══ -->
+    <div class="anecdote-hero">
+        <img src="@Model.ImageUrl" alt="@Model.Title" class="anecdote-hero-img">
+
+        <span class="hero-year-badge">
+            <i class="bi bi-trophy-fill" style="font-size:10px;"></i>
+            Dünya Kupası @Model.Year
+        </span>
+
+        <span class="hero-tag-badge">
+            <i class="bi bi-bookmark-star-fill" style="font-size:10px;"></i>
+            Tarihten Bilgi
+        </span>
+
+        <div class="hero-title-wrap">
+            <h1 class="hero-title">@Model.Title</h1>
+            <div class="hero-meta-row">
+                <span class="hero-meta-item">
+                    <i class="bi bi-calendar3"></i>
+                    @Model.Year Dünya Kupası
+                </span>
+                <span class="hero-meta-item">
+                    <i class="bi bi-clock-history"></i>
+                    Tarihsel Anekdot
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ İÇERİK ══ -->
+    <div class="anecdote-content">
+
+        <div class="content-header">
+            <div class="content-icon">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div>
+                <h3 class="content-title">Tarihsel İnceleme</h3>
+                <p class="content-sub">Dünya Kupası arşivinden derlenmiş hikaye</p>
+            </div>
+        </div>
+
+        <p class="anecdote-text">@Model.LongContent</p>
+
+        <div class="anecdote-footer">
+            <div class="footer-tags">
+                <span class="footer-tag">#DünyaKupası@Model.Year</span>
+                <span class="footer-tag">#Tarih</span>
+                <span class="footer-tag">#WC2026</span>
+            </div>
+            <a asp-action="Anecdotes" class="footer-back-link">
+                <i class="bi bi-arrow-left"></i> Tüm Hikayeler
+            </a>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,824 @@
+﻿@model WorldCup2026_Web.Models.TacticalMatchViewModel
+
+@{
+    ViewData["Title"] = "AI Küresel Draft Arena";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    body {
+        background-color: #080c14 !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .tactical-layout {
+        display: grid;
+        grid-template-columns: 1fr 480px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* 🎛️ ÖZEL NEON SCROLLBAR CHUBUĞU */
+    .live-commentary-box::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .live-commentary-box::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+    }
+
+    .live-commentary-box::-webkit-scrollbar-thumb {
+        background: rgba(56, 189, 248, 0.4);
+        border-radius: 10px;
+    }
+
+        .live-commentary-box::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+
+    /* 📺 SCOREBOARD DESIGN */
+    .digital-scoreboard {
+        background: linear-gradient(180deg, #111827 0%, #030712 100%);
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        margin-bottom: 20px;
+    }
+
+    .score-team-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 35%;
+    }
+
+    .score-team-name {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .team-dream {
+        color: #00c6ff;
+        text-shadow: 0 0 10px rgba(0,198,255,0.4);
+    }
+
+    .team-ai {
+        color: #ff4d6d;
+        text-shadow: 0 0 10px rgba(255,77,109,0.4);
+    }
+
+    .score-center-core {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .live-timer-digital {
+        background: #1e293b;
+        color: #38bdf8;
+        font-family: 'Courier New', monospace;
+        font-weight: 900;
+        font-size: 14px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .score-display-digits {
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #ffffff;
+    }
+
+    /* ÇİFT TAKTİK TAHTASI GRİDİ */
+    .pitches-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .pitch-container-box {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pitch-title-label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding-left: 6px;
+    }
+
+    .football-pitch {
+        background: radial-gradient(circle, #19381d 0%, #0a190e 100%);
+        border: 2px solid rgba(0, 198, 255, 0.3);
+        border-radius: 20px;
+        height: 540px;
+        position: relative;
+        box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+    }
+
+        .football-pitch.ai-pitch {
+            background: radial-gradient(circle, #2d1317 0%, #110507 100%);
+            border-color: rgba(255, 77, 109, 0.3);
+        }
+
+    .pitch-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: rgba(255,255,255,0.2);
+    }
+
+    .pitch-circle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 110px;
+        height: 110px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* TAKTİK KART SİMGELERİ */
+    .pitch-node {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        z-index: 5;
+    }
+
+    .node-jersey {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #111827 0%, #030712 100%);
+        border: 2px solid #00c6ff;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00c6ff;
+        font-size: 16px;
+        font-weight: 800;
+        box-shadow: 0 4px 15px rgba(0, 198, 255, 0.2);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ai-pitch .node-jersey {
+        border-color: #ff4d6d;
+        color: #ff4d6d;
+        box-shadow: 0 4px 15px rgba(255, 77, 109, 0.2);
+    }
+
+    .pitch-node:hover .node-jersey, .pitch-node.pulsing .node-jersey {
+        transform: scale(1.1) translateY(-3px);
+        background: #00c6ff;
+        color: #050a14;
+        box-shadow: 0 0 25px #00c6ff;
+    }
+
+    .ai-pitch .pitch-node:hover .node-jersey, .ai-pitch .pitch-node.pulsing .node-jersey {
+        background: #ff4d6d;
+        color: #050a14;
+        box-shadow: 0 0 25px #ff4d6d;
+    }
+
+    .pitch-node.filled .node-jersey {
+        background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%);
+        color: #ffffff;
+        border-color: #ffffff;
+        box-shadow: 0 0 15px rgba(67, 100, 247, 0.6);
+    }
+
+    .ai-pitch .pitch-node.filled .node-jersey {
+        background: linear-gradient(135deg, #800020 0%, #ff4d6d 100%);
+        color: #ffffff;
+        border-color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 77, 109, 0.6);
+    }
+
+    .node-name {
+        background: #09111e;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+        color: #ffffff !important;
+    }
+
+    .pos-gk {
+        bottom: 5%;
+        left: 50%;
+    }
+
+    .pos-df1 {
+        bottom: 25%;
+        left: 26%;
+    }
+
+    .pos-df2 {
+        bottom: 25%;
+        left: 74%;
+    }
+
+    .pos-mf1 {
+        bottom: 46%;
+        left: 28%;
+    }
+
+    .pos-mf2 {
+        bottom: 46%;
+        left: 72%;
+    }
+
+    .pos-fw {
+        bottom: 72%;
+        left: 50%;
+    }
+
+    /* SAĞ BENTO SİDEBAR */
+    .bento-sidebar {
+        background: linear-gradient(145deg, #0f1624, #131c2e);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        height: 624px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .live-commentary-box {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 16px;
+        flex: 1;
+        overflow-y: auto;
+        margin-top: 14px;
+        margin-bottom: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .commentary-row {
+        display: flex;
+        gap: 12px;
+        align-items: start;
+        font-size: 13.5px;
+    }
+
+        .commentary-row.goal-alert-row {
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+    .comment-minute {
+        background: #38bdf8;
+        color: #080c14;
+        font-weight: 900;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        min-width: 38px;
+        text-align: center;
+    }
+
+        .comment-minute.goal-bg {
+            background: #10b981 !important;
+            color: white !important;
+        }
+
+    .comment-text {
+        color: #f1f5f9 !important;
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    /* PARLAK RENK SINIFLARI */
+    .bright-guide-text {
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.6;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .modal-country-label {
+        color: #22d3ee !important;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .text-game-icon {
+        color: #00c6ff !important;
+        font-size: 42px;
+        text-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
+    }
+
+    .player-pool-card {
+        background: #111927;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 14px;
+        padding: 14px 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .player-pool-card:hover {
+            background: rgba(0, 198, 255, 0.06);
+            border-color: #00c6ff;
+        }
+
+    .flag-mini {
+        width: 22px;
+        height: 14px;
+        object-fit: cover;
+        border-radius: 2px;
+    }
+
+    /* 🎮 MINI OYUN REHBERİ BENTO KUTUSU */
+    .game-guide-bento {
+        background: linear-gradient(145deg, #0f1624, #121b2d);
+        border: 1px solid rgba(0, 198, 255, 0.12);
+        border-radius: 20px;
+        padding: 20px 24px;
+        margin-top: 24px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .guide-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        color: #00c6ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 10px;
+    }
+
+    .guide-steps-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .guide-step-card {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 14px;
+        transition: border-color 0.2s;
+    }
+
+        .guide-step-card:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+        }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid #38bdf8;
+        color: #38bdf8;
+        font-size: 11px;
+        font-weight: 800;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+
+    .step-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 6px;
+    }
+
+    .step-desc {
+        font-size: 11.5px;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin: 0;
+    }
+</style>
+
+<div class="container-fluid mt-3 px-3">
+    <div class="tactical-layout">
+
+        <!-- SOL BÖLÜM: SCOREBOARD VE YAN YANA ÇİFT SAHA -->
+        <div>
+            <div class="digital-scoreboard">
+                <div class="score-team-box"><span class="score-team-name team-dream"><i class="bi bi-shield-shaded"></i> Dream Team</span></div>
+                <div class="score-center-core">
+                    <div class="live-timer-digital" id="digitalLiveClock">00:00</div>
+                    <div class="score-display-digits" id="liveScoreCounter">0 - 0</div>
+                </div>
+                <div class="score-team-box"><span class="score-team-name team-ai">AI United <i class="bi bi-cpu"></i></span></div>
+            </div>
+
+            <div class="pitches-wrapper">
+                <!-- KULLANICININ DRAFT SAHASI -->
+                <div class="pitch-container-box">
+                    <div class="pitch-title-label text-info"><i class="bi bi-person-check"></i> Senin Kadron</div>
+                    <div class="football-pitch" id="userPitch">
+                        <div class="pitch-line"></div><div class="pitch-circle"></div>
+
+                        <div class="pitch-node pos-gk" id="node-gk" onclick="openGlobalDraft('GK', 'node-gk')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Kaleci</div>
+                        </div>
+                        <div class="pitch-node pos-df1" id="node-df1" onclick="openGlobalDraft('DF', 'node-df1')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Sol Defans</div>
+                        </div>
+                        <div class="pitch-node pos-df2" id="node-df2" onclick="openGlobalDraft('DF', 'node-df2')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Sağ Defans</div>
+                        </div>
+                        <div class="pitch-node pos-mf1" id="node-mf1" onclick="openGlobalDraft('MF', 'node-mf1')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Sol Orta Saha</div>
+                        </div>
+                        <div class="pitch-node pos-mf2" id="node-mf2" onclick="openGlobalDraft('MF', 'node-mf2')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Sağ Orta Saha</div>
+                        </div>
+                        <div class="pitch-node pos-fw" id="node-fw" onclick="openGlobalDraft('FW', 'node-fw')">
+                            <div class="node-jersey"><i class="bi bi-plus"></i></div><div class="node-name">Forvet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAKİP AI UNITED SAHASI -->
+                <div class="pitch-container-box">
+                    <div class="pitch-title-label text-danger"><i class="bi bi-cpu-fill"></i> AI United Kadrosu</div>
+                    <div class="football-pitch ai-pitch" id="aiPitch">
+                        <div class="pitch-line"></div><div class="pitch-circle"></div>
+
+                        <div class="pitch-node pos-gk" id="ai-node-gk">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-gk">Bekliyor...</div>
+                        </div>
+                        <div class="pitch-node pos-df1" id="ai-node-df1">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-df1">Bekliyor...</div>
+                        </div>
+                        <div class="pitch-node pos-df2" id="ai-node-df2">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-df2">Bekliyor...</div>
+                        </div>
+                        <div class="pitch-node pos-mf1" id="ai-node-mf1">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-mf1">Bekliyor...</div>
+                        </div>
+                        <div class="pitch-node pos-mf2" id="ai-node-mf2">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-mf2">Bekliyor...</div>
+                        </div>
+                        <div class="pitch-node pos-fw" id="ai-node-fw">
+                            <div class="node-jersey">AI</div><div class="node-name" id="label-ai-fw">Bekliyor...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAĞ BÖLÜM: CANLI RADAR PANELİ -->
+        <div class="bento-sidebar">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-10 pb-2">
+                <h5 class="fw-bold text-white m-0"><i class="bi bi-broadcast text-danger"></i> Canlı Spiker Masası</h5>
+                <span id="liveStatusBadge" class="badge bg-secondary px-2.5 py-1">BEKLEMEDE</span>
+            </div>
+
+            <div class="live-commentary-box" id="liveCommentaryZone">
+                <div class="text-center my-auto p-4" id="waitingNarrative">
+                    <i class="bi bi-controller text-game-icon d-block mb-3"></i>
+                    <p class="bright-guide-text m-0">6 mevkiden de rüya oyuncularınızı seçin, ardından maç simülasyonunu ateşleyin!</p>
+                </div>
+            </div>
+
+            <div id="simulationActionArea">
+                <button id="btnStartSimulation" class="btn btn-info w-100 fw-bold py-3 rounded-3 d-none">
+                    <i class="bi bi-lightning-charge-fill"></i> Maçı Başlat ve Canlı İzle
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 📺 KULLANICI İÇİN MODERN OYUN REHBERİ BENTO KUTUSU (ALT KISIM) -->
+    <div class="game-guide-bento">
+        <div class="guide-header">
+            <i class="bi bi-info-circle-fill text-info"></i> AI Taktik Düellosu Nasıl Oynanır?
+        </div>
+        <div class="guide-steps-grid">
+
+            <!-- Adım 1 -->
+            <div class="guide-step-card">
+                <div class="step-badge">01</div>
+                <div class="step-title">Küresel Draft Havuzu</div>
+                <p class="step-desc">Taktik tahtasındaki pozisyonlara tıklayarak Dünya Kupası'ndaki tüm yıldızlar arasından rastgele gelen 3 adaydan birini seçip kadronu kur.</p>
+            </div>
+
+            <!-- Adım 2 -->
+            <div class="guide-step-card">
+                <div class="step-badge">02</div>
+                <div class="step-title">Sıra Tabanlı Seçim</div>
+                <p class="step-desc">Sen her oyuncu kilitlediğinde, AI United boş durmaz ve veritabanından aynı pozisyon için kendi rakip oyuncusunu anlık ve gizli olarak çeker.</p>
+            </div>
+
+            <!-- Adım 3 -->
+            <div class="guide-step-card">
+                <div class="step-badge">03</div>
+                <div class="step-title">Gerçek Zamanlı Form Faktörü</div>
+                <p class="step-desc">Yapay zeka, iki takımın oyuncularının gerçek hayattaki en güncel form durumlarını, turnuva performanslarını ve kalitelerini objektif olarak tartarak maçı simüle eder.</p>
+            </div>
+
+            <!-- Adım 4 -->
+            <div class="guide-step-card">
+                <div class="step-badge">04</div>
+                <div class="step-title">Canlı Spiker Akışı</div>
+                <p class="step-desc">Maçı başlattıktan sonra 0'dan 90'a akan kronometre eşliğinde tamamen AI'nin ürettiği tehlikeli atakları, kartları ve golleri canlı spikerden anlık olarak takip et.</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- KÜRESEL DRAFT SEÇİM MODALI -->
+<div class="modal fade" id="draftModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary text-white" style="border-radius: 18px;">
+            <div class="modal-header border-secondary">
+                <h6 class="modal-title fw-bold" id="draftModalTitle">🔮 Küresel Draft Havuzu</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex flex-column gap-2" id="draftPoolContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let activeNodeId = "";
+    let draftCache = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+
+    let userSelectedSquad = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+    let aiSelectedSquad = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+
+    const positionMap = { "node-gk": "GK", "node-df1": "DF", "node-df2": "DF", "node-mf1": "MF", "node-mf2": "MF", "node-fw": "FW" };
+    const aiLabelsMap = { "node-gk": "#label-ai-gk", "node-df1": "#label-ai-df1", "node-df2": "#label-ai-df2", "node-mf1": "#label-ai-mf1", "node-mf2": "#label-ai-mf2", "node-fw": "#label-ai-fw" };
+    const aiNodesMap = { "node-gk": "#ai-node-gk", "node-df1": "#ai-node-df1", "node-df2": "#ai-node-df2", "node-mf1": "#ai-node-mf1", "node-mf2": "#ai-node-mf2", "node-fw": "#ai-node-fw" };
+
+    function openGlobalDraft(position, nodeId) {
+        activeNodeId = nodeId;
+        $('#draftModalTitle').text("🔮 " + position + " Pozisyonu İçin Yıldızlar");
+
+        var modalObj = new bootstrap.Modal(document.getElementById('draftModal'));
+        modalObj.show();
+
+        if (draftCache[nodeId] !== null) {
+            renderDraftCards(draftCache[nodeId]);
+            return;
+        }
+
+        $('#draftPoolContainer').html('<div class="text-center py-3"><div class="spinner-border text-info" role="status"></div></div>');
+
+        $.getJSON('/Home/GetGlobalDraftPlayers', { position: position }, function (res) {
+            if (res && res.length > 0) {
+                draftCache[nodeId] = res;
+                renderDraftCards(res);
+            }
+        });
+    }
+
+    function renderDraftCards(players) {
+        let html = "";
+        players.forEach(player => {
+            html += `
+                                    <div class="player-pool-card" onclick="lockPlayerToPitch('${player.name}', ${player.number}, '${player.pos}')">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-info text-dark">#${player.number}</span>
+                                            <strong class="text-white">${player.name}</strong>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 modal-country-label">
+                                            <img src="${player.flagUrl}" class="flag-mini"> ${player.teamName}
+                                        </div>
+                                    </div>`;
+        });
+        $('#draftPoolContainer').html(html);
+    }
+
+    function lockPlayerToPitch(name, number, pos) {
+        userSelectedSquad[activeNodeId] = { name: name, number: number, pos: pos };
+
+        let target = $('#' + activeNodeId);
+        target.addClass('filled');
+        target.find('.node-jersey').text(number);
+        target.find('.node-name').text(name);
+
+        $('#draftModal').modal('hide');
+
+        let currentPos = positionMap[activeNodeId];
+        let aiLabelTarget = aiLabelsMap[activeNodeId];
+        let aiNodeTarget = aiNodesMap[activeNodeId];
+
+        $(aiLabelTarget).text("Kura Çekiliyor...");
+
+        $.getJSON('/Home/GetGlobalDraftPlayers', { position: currentPos }, function (res) {
+            if (res && res.length > 0) {
+                let aiPlayer = res[Math.floor(Math.random() * res.length)];
+                aiSelectedSquad[activeNodeId] = { name: aiPlayer.name, number: aiPlayer.number, pos: aiPlayer.pos };
+
+                $(aiNodeTarget).addClass('filled');
+                $(aiNodeTarget).find('.node-jersey').text(aiPlayer.number);
+                $(aiLabelTarget).text(aiPlayer.name);
+            }
+            checkDraftCompletion();
+        });
+    }
+
+    function checkDraftCompletion() {
+        let isUserComplete = Object.values(userSelectedSquad).every(p => p !== null);
+        let isAiComplete = Object.values(aiSelectedSquad).every(p => p !== null);
+        if (isUserComplete && isAiComplete) {
+            $('#btnStartSimulation').removeClass('d-none');
+        }
+    }
+
+    // 💥 GERÇEK YAPAY ZEKA GÜDÜMLÜ POZİSYON AKIŞ MOTORU
+    $(document).on('click', '#btnStartSimulation', function () {
+        let simBtn = $(this);
+        simBtn.prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div> Maç Oynanıyor...');
+        $('#waitingNarrative').remove();
+        $('#liveCommentaryZone').html('');
+        $('#liveStatusBadge').removeClass('bg-secondary').addClass('bg-danger').text('MAÇ OYNANIYOR');
+
+        let payload = {
+            UserPlayers: Object.values(userSelectedSquad),
+            AiPlayers: Object.values(aiSelectedSquad)
+        };
+
+        $.ajax({
+            url: '/Home/SimulateTacticalMatch',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (response) {
+                if (response.success) {
+                    let matchData;
+                    try {
+                        let cleanJson = response.aiJsonRaw.trim();
+                        matchData = JSON.parse(cleanJson);
+                    } catch (e) {
+                        console.error("JSON parse hatası oluştu, ham veri:", response.aiJsonRaw);
+                        alert("Yapay zeka maç çıktısı çözümlenemedi. Lütfen maçı yeniden başlatın.");
+                        simBtn.prop('disabled', false).text("Maçı Başlat ve Canlı İzle");
+                        return;
+                    }
+
+                    matchData.timeline.sort((a, b) => parseInt(a.minute) - parseInt(b.minute));
+
+                    // ✅ DÜZELTME: Skor değişkenleri burada, doğru isimlerle tanımlanıyor.
+                    let eventIndex = 0;
+                    let userScore = 0;
+                    let aiScore = 0;
+                    let aiNodes = ['#ai-node-gk', '#ai-node-df1', '#ai-node-df2', '#ai-node-mf1', '#ai-node-mf2', '#ai-node-fw'];
+
+                    // ⏳ GÜNCEL VE HATASIZ SENKRONİZASYON MOTORU
+                    let matchTimer = setInterval(function () {
+                        if (eventIndex < matchData.timeline.length) {
+                            let ev = matchData.timeline[eventIndex];
+                            let rawMin = parseInt(ev.minute);
+                            let displayMin = rawMin < 10 ? "0" + rawMin : rawMin;
+
+                            $('#digitalLiveClock').text(displayMin + ":00");
+
+                            $('.pitch-node').removeClass('pulsing');
+                            let uKeys = Object.keys(userSelectedSquad);
+                            $('#' + uKeys[Math.floor(Math.random() * uKeys.length)]).addClass('pulsing');
+                            $(aiNodes[Math.floor(Math.random() * 6)]).addClass('pulsing');
+
+                            // ✅ DÜZELTME: Gol tespiti artık önce "isGoal" bayrağına bakıyor.
+                            // Sadece bu alan tanımlı değilse metin içinde "gol" / "gooolll" / "ağları sarstı"
+                            // ifadelerine bakılıyor. "skor" kelimesi kaldırıldı (yanlış tetikleme yapıyordu).
+                            let isGoalDetected = false;
+                            if (typeof ev.isGoal !== "undefined") {
+                                isGoalDetected = (ev.isGoal === true || ev.isGoal === "true" || ev.isGoal === 1);
+                            } else {
+                                isGoalDetected = /goool+|^gol\b|gol attı|ağları sarstı|ağlarla buluştu/gi.test(ev.text);
+                            }
+
+                            if (isGoalDetected) {
+                                // ✅ DÜZELTME: Hangi takımın gol attığını birden fazla
+                                // olası alan adına bakarak (team / scoringTeam / scorer) belirliyoruz.
+                                let scoringTeam = (ev.team || ev.scoringTeam || ev.scorer || "").toString().toLowerCase();
+
+                                if (scoringTeam.indexOf("user") !== -1 || scoringTeam.indexOf("dream") !== -1) {
+                                    userScore++;
+                                } else if (scoringTeam.indexOf("ai") !== -1) {
+                                    aiScore++;
+                                }
+
+                                $('#liveScoreCounter').text(userScore + " - " + aiScore);
+                            }
+
+                            $('#liveCommentaryZone').append(`
+                        <div class="commentary-row ${isGoalDetected ? 'goal-alert-row' : ''}">
+                            <div class="comment-minute ${isGoalDetected ? 'goal-bg' : ''}">${rawMin}'</div>
+                            <div class="comment-text">${ev.text}</div>
+                        </div>
+                    `);
+
+                            let zone = document.getElementById('liveCommentaryZone');
+                            zone.scrollTop = zone.scrollHeight;
+                            eventIndex++;
+                        } else {
+                            // 🏁 MAÇ BİTTİ - SON SKORU GÜNCEL SAYACIMIZDAN BAS
+                            clearInterval(matchTimer);
+                            $('.pitch-node').removeClass('pulsing');
+                            $('#digitalLiveClock').text("90:00");
+                            $('#liveStatusBadge').removeClass('bg-danger').addClass('bg-success').text('MAÇ BİTTİ');
+
+                            $('#liveCommentaryZone').append(`
+                        <div class="p-3 mt-2 rounded-3 border border-info">
+                            <h6 class="text-info fw-bold">Maç Sonucu: ${userScore} - ${aiScore}</h6>
+                            <p class="small text-white">İki takımın da güncel form durumlarına göre yapılan analiz tamamlandı.</p>
+                        </div>
+                    `);
+
+                            $('#simulationActionArea').html('<button onclick="location.reload()" class="btn btn-success w-100 fw-bold py-3 mt-2">Yeni Oyun</button>');
+                        }
+                    }, 2500);
+                } else {
+                    alert("Hata: " + response.message);
+                    simBtn.prop('disabled', false).text("Maçı Başlat ve Canlı İzle");
+                }
+            }
+        });
+    });
+
+    function resetGameArena() {
+        userSelectedSquad = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+        aiSelectedSquad = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+        draftCache = { "node-gk": null, "node-df1": null, "node-df2": null, "node-mf1": null, "node-mf2": null, "node-fw": null };
+
+        $('.pitch-node').removeClass('filled pulsing');
+        $('.football-pitch:not(.ai-pitch) .node-jersey').html('<i class="bi bi-plus"></i>');
+        $('.ai-pitch .node-jersey').text('AI');
+
+        $('#node-gk .node-name').text("Kaleci");
+        $('#node-df1 .node-name').text("Sol Defans");
+        $('#node-df2 .node-name').text("Sağ Defans");
+        $('#node-mf1 .node-name').text("Sol Orta Saha");
+        $('#node-mf2 .node-name').text("Sağ Orta Saha");
+        $('#node-fw .node-name').text("Forvet");
+
+        $('#label-ai-gk, #label-ai-df1, #label-ai-df2, #label-ai-mf1, #label-ai-mf2, #label-ai-fw').text("Bekliyor...");
+
+        $('#digitalLiveClock').text("00:00");
+        $('#liveScoreCounter').text("0 - 0");
+        $('#liveStatusBadge').removeClass('bg-success').addClass('bg-secondary').text('BEKLEMEDE');
+
+        $('#liveCommentaryZone').html(`
+                                <div class="text-center my-auto p-4" id="waitingNarrative">
+                                    <i class="bi bi-controller text-game-icon d-block mb-3"></i>
+                                    <p class="bright-guide-text m-0">6 mevkiden de rüya oyuncularınızı seçin, ardından maç simülasyonunu ateşleyin!</p>
+                                </div>
+                            `);
+
+        $('#simulationActionArea').html(`
+                                <button id="btnStartSimulation" class="btn btn-info w-100 fw-bold py-3 rounded-3 d-none">
+                                    <i class="bi bi-lightning-charge-fill"></i> Maçı Başlat ve Canlı İzle
+                                </button>
+                            `);
+    }
+</script>

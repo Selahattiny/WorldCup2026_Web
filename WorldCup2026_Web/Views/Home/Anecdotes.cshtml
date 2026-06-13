@@ -1,0 +1,118 @@
+﻿@model IEnumerable<WorldCup2026_Web.Models.Anecdote>
+
+@{
+    ViewData["Title"] = "Tarih ve Anektotlar";
+}
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    body {
+        background-color: #080c14;
+    }
+
+    .history-card {
+        background: #101726;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 242, 254, 0.08);
+            border-color: rgba(0, 242, 254, 0.2);
+        }
+
+    .year-badge {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        color: #080c14;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 30px;
+    }
+
+    .text-neon {
+        color: #00f2fe;
+    }
+
+    .btn-outline-neon {
+        border: 1px solid #00f2fe;
+        color: #00f2fe;
+        background: transparent;
+        transition: all 0.2s;
+    }
+
+        .btn-outline-neon:hover {
+            background: rgba(0, 242, 254, 0.1);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+            color: #00f2fe;
+        }
+</style>
+
+<div class="container mt-4">
+    <div class="mb-5 border-bottom border-secondary border-opacity-20 pb-3">
+        <h2 class="fw-bold text-white m-0"><i class="bi bi-journal-richtext text-neon"></i> 📖 Dünya Kupası Tarihi & Efsane Anlar</h2>
+        <p class="text-white-50 mb-0">Yeşil sahaların unutulmaz dramaları, mucizeleri ve ikonik anektodları</p>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-12 col-lg-6">
+                <div class="card history-card h-100 border-0 shadow-lg">
+                    <div class="row g-0 h-100">
+                        <div class="col-sm-5 position-relative" style="min-height: 200px;">
+                            <img src="@item.ImageUrl" alt="@item.Title" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;">
+                        </div>
+                        <div class="col-sm-7 p-4 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="year-badge shadow-sm">🏆 @item.Year</span>
+                                </div>
+                                <h4 class="fw-bold text-white mb-2">@item.Title</h4>
+                                <p class="text-white-50 small fw-light mb-4" style="line-height:1.6;">@item.Content</p>
+                            </div>
+                            <!-- DETAY SAYFASINA BAĞLANTI BUTONU -->
+                            <a asp-controller="Home" asp-action="AnecdoteDetail" asp-route-id="@item.Id" class="btn btn-outline-neon rounded-pill btn-sm py-2 fw-bold w-100">Hikayenin Tamamını Oku</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,800 @@
+﻿@model IEnumerable<WorldCup2026_Web.Models.Match>
+
+@{
+    ViewData["Title"] = "Tüm Fikstür";
+
+    var grouped = Model
+        .OrderBy(m => m.MatchDate)
+        .GroupBy(m => m.MatchDate.Date)
+        .ToList();
+}
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    /* ══════════════════════════════════════
+           SAYFA
+        ══════════════════════════════════════ */
+    .fix-page {
+        padding-bottom: 48px;
+    }
+
+    /* ══════════════════════════════════════
+           BAŞLIK
+        ══════════════════════════════════════ */
+    .fix-page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        gap: 16px;
+    }
+
+    .fix-page-title-wrap {
+    }
+
+    .fix-page-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(246, 166, 35, 0.08);
+        border: 1px solid rgba(246, 166, 35, 0.18);
+        color: #f6a623;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+    }
+
+    .fix-page-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 6px;
+        line-height: 1.2;
+    }
+
+    .fix-page-sub {
+        font-size: 13px;
+        color: #4a5568;
+        margin: 0;
+    }
+
+    /* Özet istatistikler */
+    .fix-summary {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .fix-summary-pill {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 10px 16px;
+        text-align: center;
+        min-width: 70px;
+    }
+
+    .fix-summary-num {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 3px;
+    }
+
+    .fix-summary-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #3a4255;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════
+           FİLTRE / ARAMA BAR
+        ══════════════════════════════════════ */
+    .fix-filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .fix-search {
+        flex: 1;
+        min-width: 200px;
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 9px 14px 9px 36px;
+        font-size: 13px;
+        color: #ccd6f6;
+        outline: none;
+        transition: border-color 0.2s;
+        font-family: inherit;
+        position: relative;
+    }
+
+        .fix-search::placeholder {
+            color: #3a4255;
+        }
+
+        .fix-search:focus {
+            border-color: rgba(0, 198, 255, 0.3);
+        }
+
+    .fix-search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .fix-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #3a4255;
+        font-size: 13px;
+        pointer-events: none;
+    }
+
+    .filter-tab {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 9px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+        .filter-tab:hover {
+            color: #ccd6f6;
+            border-color: rgba(255, 255, 255, 0.14);
+            background: #111927;
+        }
+
+        .filter-tab.active {
+            background: rgba(0, 198, 255, 0.08);
+            border-color: rgba(0, 198, 255, 0.25);
+            color: #00c6ff;
+        }
+
+    /* ══════════════════════════════════════
+           TARİH GRUBU
+        ══════════════════════════════════════ */
+    .date-group {
+        margin-bottom: 28px;
+    }
+
+    .date-group-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .date-label-box {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .date-label-day {
+        font-size: 15px;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1;
+    }
+
+    .date-label-full {
+        font-size: 11px;
+        color: #4a5568;
+        font-weight: 500;
+    }
+
+    .date-label-today {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        background: rgba(0, 198, 255, 0.1);
+        border: 1px solid rgba(0, 198, 255, 0.2);
+        color: #00c6ff;
+        padding: 2px 7px;
+        border-radius: 20px;
+    }
+
+    .date-divider {
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .date-match-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    /* ══════════════════════════════════════
+           MAÇ KARTI
+        ══════════════════════════════════════ */
+    .match-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .match-card {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 0;
+        overflow: hidden;
+        transition: border-color 0.2s, transform 0.15s;
+        position: relative;
+    }
+
+        .match-card:hover {
+            border-color: rgba(0, 198, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .match-card.is-finished {
+            opacity: 0.38;
+        }
+
+        /* Sol renk çubuğu — grup rengine göre */
+        .match-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 14px 0 0 14px;
+            background: var(--group-color, rgba(0, 198, 255, 0.4));
+        }
+
+    .match-card-inner {
+        display: grid;
+        grid-template-columns: 200px 1fr 90px 1fr 190px;
+        align-items: center;
+        padding: 14px 20px 14px 26px;
+        gap: 12px;
+    }
+
+    /* ── Sol: Meta bilgi ── */
+    .mc-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .mc-badges {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .mc-badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 2px 7px;
+        border-radius: 20px;
+    }
+
+    .mc-badge-played {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.18);
+    }
+
+    .mc-badge-stage {
+        background: rgba(255, 255, 255, 0.04);
+        color: #4a5568;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mc-badge-group {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 20px;
+        border: 1px solid;
+    }
+
+    .mc-time {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #3a4255;
+        font-weight: 500;
+    }
+
+        .mc-time i {
+            font-size: 11px;
+            color: #00c6ff;
+        }
+
+        .mc-time.past {
+            text-decoration: line-through;
+            color: #2d3748;
+        }
+
+            .mc-time.past i {
+                color: #2d3748;
+            }
+
+    /* ── Takım alanları ── */
+    .mc-team-r {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .mc-team-l {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .mc-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+
+    .mc-flag {
+        width: 30px;
+        height: 20px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        flex-shrink: 0;
+    }
+
+    /* ── VS orta ── */
+    .mc-vs-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mc-vs {
+        font-size: 10px;
+        font-weight: 800;
+        color: #2d3748;
+        letter-spacing: 0.1em;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 5px 14px;
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .mc-time-badge {
+        font-size: 10px;
+        font-weight: 700;
+        color: #00c6ff;
+        letter-spacing: 0.04em;
+    }
+
+    /* ── Stadyum ── */
+    .mc-stadium {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
+        overflow: hidden;
+    }
+
+    .mc-stadium-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .mc-stadium-icon {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: #ef4444;
+    }
+
+    /* ══════════════════════════════════════
+           GRUP RENK PALETİ
+        ══════════════════════════════════════ */
+    [data-group="A"] {
+        --group-color: #00c6ff;
+        --group-text: #00c6ff;
+        --group-bg: rgba(0,198,255,0.08);
+        --group-border: rgba(0,198,255,0.2);
+    }
+
+    [data-group="B"] {
+        --group-color: #a78bfa;
+        --group-text: #a78bfa;
+        --group-bg: rgba(167,139,250,0.08);
+        --group-border: rgba(167,139,250,0.2);
+    }
+
+    [data-group="C"] {
+        --group-color: #34d399;
+        --group-text: #34d399;
+        --group-bg: rgba(52,211,153,0.08);
+        --group-border: rgba(52,211,153,0.2);
+    }
+
+    [data-group="D"] {
+        --group-color: #f6a623;
+        --group-text: #f6a623;
+        --group-bg: rgba(246,166,35,0.08);
+        --group-border: rgba(246,166,35,0.2);
+    }
+
+    [data-group="E"] {
+        --group-color: #f472b6;
+        --group-text: #f472b6;
+        --group-bg: rgba(244,114,182,0.08);
+        --group-border: rgba(244,114,182,0.2);
+    }
+
+    [data-group="F"] {
+        --group-color: #fb923c;
+        --group-text: #fb923c;
+        --group-bg: rgba(251,146,60,0.08);
+        --group-border: rgba(251,146,60,0.2);
+    }
+
+    [data-group="G"] {
+        --group-color: #38bdf8;
+        --group-text: #38bdf8;
+        --group-bg: rgba(56,189,248,0.08);
+        --group-border: rgba(56,189,248,0.2);
+    }
+
+    [data-group="H"] {
+        --group-color: #4ade80;
+        --group-text: #4ade80;
+        --group-bg: rgba(74,222,128,0.08);
+        --group-border: rgba(74,222,128,0.2);
+    }
+
+    [data-group="I"] {
+        --group-color: #e879f9;
+        --group-text: #e879f9;
+        --group-bg: rgba(232,121,249,0.08);
+        --group-border: rgba(232,121,249,0.2);
+    }
+
+    [data-group="J"] {
+        --group-color: #fbbf24;
+        --group-text: #fbbf24;
+        --group-bg: rgba(251,191,36,0.08);
+        --group-border: rgba(251,191,36,0.2);
+    }
+
+    [data-group="K"] {
+        --group-color: #60a5fa;
+        --group-text: #60a5fa;
+        --group-bg: rgba(96,165,250,0.08);
+        --group-border: rgba(96,165,250,0.2);
+    }
+
+    [data-group="L"] {
+        --group-color: #f9a8d4;
+        --group-text: #f9a8d4;
+        --group-bg: rgba(249,168,212,0.08);
+        --group-border: rgba(249,168,212,0.2);
+    }
+
+    .mc-badge-group {
+        background: var(--group-bg);
+        color: var(--group-text);
+        border-color: var(--group-border);
+    }
+
+    /* ══════════════════════════════════════
+           BOŞ DURUM
+        ══════════════════════════════════════ */
+    .fix-empty {
+        padding: 64px 0;
+        text-align: center;
+        color: #2d3748;
+    }
+
+        .fix-empty i {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+    /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
+    @@media (max-width: 900px) {
+        .match-card-inner {
+            grid-template-columns: 160px 1fr 60px 1fr 120px;
+            padding: 12px 14px 12px 20px;
+            gap: 8px;
+        }
+
+        .mc-name {
+            max-width: 100px;
+            font-size: 13px;
+        }
+
+        .mc-stadium-name {
+            max-width: 110px;
+        }
+
+        .fix-summary {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .match-card-inner {
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 8px 6px;
+        }
+
+        .mc-meta {
+            grid-column: 1 / -1;
+        }
+
+        .mc-team-r {
+            justify-content: flex-start;
+        }
+
+        .mc-stadium {
+            grid-column: 1 / -1;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="container fix-page mt-5">
+
+    <!-- ══ BAŞLIK ══ -->
+    <div class="fix-page-header">
+        <div class="fix-page-title-wrap">
+            <div class="fix-page-eyebrow">
+                <i class="bi bi-calendar3" style="font-size:9px;"></i>
+                WC 2026 — Resmi Program
+            </div>
+            <h1 class="fix-page-title">Turnuva Fikstür Arenası</h1>
+            <p class="fix-page-sub">Kuzey Amerika 2026 organizasyonunun tüm maç programı</p>
+        </div>
+
+        <div class="fix-summary">
+            <div class="fix-summary-pill">
+                <div class="fix-summary-num" style="color:#00c6ff;">@Model.Count()</div>
+                <div class="fix-summary-label">Toplam Maç</div>
+            </div>
+            <div class="fix-summary-pill">
+                <div class="fix-summary-num" style="color:#34d399;">@Model.Count(m => m.MatchDate >= DateTime.Now)</div>
+                <div class="fix-summary-label">Yaklaşan</div>
+            </div>
+            <div class="fix-summary-pill">
+                <div class="fix-summary-num" style="color:#f87171;">@Model.Count(m => m.MatchDate < DateTime.Now)</div>
+                <div class="fix-summary-label">Oynandı</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ FİLTRE BAR ══ -->
+    <div class="fix-filter-bar">
+        <div class="fix-search-wrap">
+            <i class="bi bi-search fix-search-icon"></i>
+            <input type="text"
+                   class="fix-search"
+                   id="fix-search-input"
+                   placeholder="Takım veya stadyum ara..."
+                   oninput="searchFixtures(this.value)">
+        </div>
+        <button class="filter-tab active" onclick="filterFix('all', this)">Tümü</button>
+        <button class="filter-tab" onclick="filterFix('upcoming', this)">Yaklaşan</button>
+        <button class="filter-tab" onclick="filterFix('played', this)">Oynananlar</button>
+    </div>
+
+    <!-- ══ TARİH GRUPLARI ══ -->
+    <div id="fix-list">
+        @if (!grouped.Any())
+        {
+            <div class="fix-empty">
+                <i class="bi bi-calendar-x"></i>
+                Gösterilecek maç bulunamadı.
+            </div>
+        }
+        else
+        {
+            @foreach (var group in grouped)
+            {
+                bool isToday = group.Key.Date == DateTime.Today;
+                int matchCount = group.Count();
+
+                <div class="date-group" data-date-group="@group.Key.ToString("yyyy-MM-dd")">
+                    <div class="date-group-header">
+                        <div class="date-label-box">
+                            <span class="date-label-day">@group.Key.ToString("dd MMMM", new System.Globalization.CultureInfo("tr-TR"))</span>
+                            <span class="date-label-full">@group.Key.ToString("dddd yyyy", new System.Globalization.CultureInfo("tr-TR"))</span>
+                            @if (isToday)
+                            {
+                                <span class="date-label-today">Bugün</span>
+                            }
+                        </div>
+                        <div class="date-divider"></div>
+                        <span class="date-match-count">@matchCount maç</span>
+                    </div>
+
+                    <div class="match-cards">
+                        @foreach (var match in group.OrderBy(m => m.MatchDate))
+                        {
+                            bool isFinished = match.MatchDate < DateTime.Now;
+                            string groupName = match.HomeTeam?.GroupName ?? "A";
+
+                            <div class="match-card @(isFinished ? "is-finished" : "")"
+                                 data-group="@groupName"
+                                 data-status="@(isFinished ? "played" : "upcoming")"
+                                 data-search="@((match.HomeTeam?.Name + " " + match.AwayTeam?.Name + " " + match.Stadium?.Name).ToLower())">
+
+                                <div class="match-card-inner">
+
+                                    <!-- Meta -->
+                                    <div class="mc-meta">
+                                        <div class="mc-badges">
+                                            @if (isFinished)
+                                            {
+                                                <span class="mc-badge mc-badge-played">Oynandı</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="mc-badge mc-badge-stage">@match.Stage?.ToUpper()</span>
+                                            }
+                                            <span class="mc-badge mc-badge-group">GRP @groupName</span>
+                                        </div>
+                                        <div class="mc-time @(isFinished ? "past" : "")">
+                                            <i class="bi bi-clock"></i>
+                                            @match.MatchDate.ToString("HH:mm")
+                                        </div>
+                                    </div>
+
+                                    <!-- Ev Sahibi -->
+                                    <div class="mc-team-r">
+                                        <span class="mc-name">@match.HomeTeam?.Name</span>
+                                        <img src="@match.HomeTeam?.FlagUrl"
+                                             class="mc-flag"
+                                             alt="@match.HomeTeam?.Name"
+                                             onerror="this.style.display='none'">
+                                    </div>
+
+                                    <!-- VS -->
+                                    <div class="mc-vs-wrap">
+                                        <span class="mc-vs">VS</span>
+                                    </div>
+
+                                    <!-- Deplasman -->
+                                    <div class="mc-team-l">
+                                        <img src="@match.AwayTeam?.FlagUrl"
+                                             class="mc-flag"
+                                             alt="@match.AwayTeam?.Name"
+                                             onerror="this.style.display='none'">
+                                        <span class="mc-name">@match.AwayTeam?.Name</span>
+                                    </div>
+
+                                    <!-- Stadyum -->
+                                    <div class="mc-stadium">
+                                        <span class="mc-stadium-name" title="@match.Stadium?.Name">@match.Stadium?.Name</span>
+                                        <div class="mc-stadium-icon">
+                                            <i class="bi bi-geo-alt-fill"></i>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+</div>
+
+<script>
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    function applyFilters() {
+        const cards = document.querySelectorAll('.match-card');
+        const groups = document.querySelectorAll('.date-group');
+
+        cards.forEach(card => {
+            const statusMatch = currentFilter === 'all' || card.dataset.status === currentFilter;
+            const searchMatch = !currentSearch || card.dataset.search.includes(currentSearch.toLowerCase());
+            card.style.display = (statusMatch && searchMatch) ? '' : 'none';
+        });
+
+        // Tüm kartları gizlenmiş olan grupları sakla
+        groups.forEach(group => {
+            const visible = [...group.querySelectorAll('.match-card')].some(c => c.style.display !== 'none');
+            group.style.display = visible ? '' : 'none';
+        });
+    }
+
+    function filterFix(type, btn) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+    }
+
+    function searchFixtures(val) {
+        currentSearch = val.trim();
+        applyFilters();
+    }
+</script>

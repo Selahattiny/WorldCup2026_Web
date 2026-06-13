@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldCup2026_Web", "WorldCup2026_Web\WorldCup2026_Web.csproj", "{1C23C5AC-4E56-4C1F-A744-072A0FAA88DB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C23C5AC-4E56-4C1F-A744-072A0FAA88DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C23C5AC-4E56-4C1F-A744-072A0FAA88DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C23C5AC-4E56-4C1F-A744-072A0FAA88DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C23C5AC-4E56-4C1F-A744-072A0FAA88DB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8971B903-0B94-4E28-B1CF-57202AE90EC3}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,405 @@
+﻿@model WorldCup2026_Web.Models.TeamSquadViewModel
+
+@{
+    ViewData["Title"] = $"{Model.TeamName} Kadrosu";
+    var allTeams = ViewBag.AllTeams as IEnumerable<WorldCup2026_Web.Models.Team>;
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    body {
+        background-color: #080c14 !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden; /* Sayfa genelinde sağa taşmayı engeller */
+    }
+
+    /* ÖZELLEŞTİRİLMİŞ MODERN SIDEBAR SCROLLBAR */
+    .team-sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .team-sidebar::-webkit-scrollbar-track {
+        background: #080c14;
+        border-radius: 10px;
+    }
+
+    .team-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+    }
+
+        .team-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 242, 254, 0.3);
+        }
+
+    /* ANA SAYFA DÜZENİ (EKRANA TAM SIĞMA GARANTİLİ) */
+    .squad-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 20px;
+        align-items: start;
+        width: 100%;
+    }
+
+    /* SOL PANEL (TAKIM LİSTESİ) */
+    .team-sidebar {
+        background: linear-gradient(145deg, #0f1624, #131c2e);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 16px;
+        max-height: 680px;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    /* ARAMA BARU */
+    .search-wrapper {
+        position: relative;
+        margin-bottom: 16px;
+    }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a5568;
+        }
+
+    .team-search-input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        background: #080c14;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+
+        .team-search-input:focus {
+            border-color: #00f2fe;
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.15);
+            outline: none;
+        }
+
+    .team-list-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .team-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 10px 12px;
+        background: transparent;
+        border: 1px solid transparent;
+        color: #a0aec0;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        transition: all 0.15s;
+        position: relative;
+    }
+
+    .team-btn-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .team-btn:hover {
+        background: rgba(255, 255, 255, 0.02);
+        color: #fff;
+        transform: translateX(2px);
+    }
+
+    .team-btn.active {
+        background: rgba(0, 242, 254, 0.06);
+        border-color: rgba(0, 242, 254, 0.15);
+        color: #00f2fe;
+    }
+
+        .team-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 30%;
+            height: 40%;
+            width: 3px;
+            background: #00f2fe;
+            border-radius: 0 4px 4px 0;
+        }
+
+    .team-mini-flag {
+        width: 22px;
+        height: 15px;
+        object-fit: cover;
+        border-radius: 2px;
+    }
+
+    /* BENTO SQUAD RE-GRID (SAĞ PANELÜN YAPISI) */
+    .position-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .position-card {
+        background: linear-gradient(145deg, #0f1624, #131c2e);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    }
+
+    .position-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+    }
+
+    .position-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* OYUNCULARI YANYANA 2 SIRA HALİNE GETİREN STRATEJİK SEKTÖR */
+    .players-container-box {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 Sütun Yan Yana Düzen */
+        gap: 8px; /* Sütunlar ve satırlar arası milimetrik boşluk */
+    }
+
+    .player-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.01);
+        font-size: 12.5px;
+        border: 1px solid rgba(255,255,255,0.01);
+        transition: all 0.1s;
+    }
+
+        .player-row:hover {
+            background: rgba(0, 242, 254, 0.03);
+            border-color: rgba(0, 242, 254, 0.08);
+        }
+
+    .player-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .player-number {
+        font-weight: 800;
+        color: #00f2fe;
+        font-size: 10.5px;
+        background: rgba(0, 242, 254, 0.08);
+        padding: 1px 5px;
+        border-radius: 4px;
+        min-width: 22px;
+        text-align: center;
+    }
+
+    .player-name {
+        font-weight: 600;
+        color: #ccd6f6;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .player-dob {
+        font-size: 10.5px;
+        color: #4f5b73;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="container-fluid mt-3 px-3">
+    <div class="d-flex align-items-center gap-3 mb-3 border-bottom border-secondary border-opacity-10 pb-2.5">
+        @if (!string.IsNullOrEmpty(Model.FlagUrl))
+        {
+            <img src="@Model.FlagUrl" style="width: 48px; height: 32px; object-fit: cover;" class="rounded shadow border border-secondary border-opacity-20">
+        }
+        <div>
+            <h4 class="fw-bold text-white m-0" style="letter-spacing: 0.3px;">⚽ @Model.TeamName Kadro Yapılanması</h4>
+            <p class="text-muted small m-0" style="font-size: 11px;">Mevkisel oyuncu dağılımları ve kadro istatistik matrisi</p>
+        </div>
+    </div>
+
+    <div class="squad-layout">
+        <div class="team-sidebar">
+            <div class="search-wrapper">
+                <input type="text" id="teamSearch" class="team-search-input" placeholder="Takım ara...">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <h6 class="text-uppercase font-bold text-muted mb-2.5 ps-2" style="font-size:9px; letter-spacing:1px; opacity: 0.5;">KATILIMCI ÜLKELER</h6>
+
+            <div class="team-list-wrapper" id="teamList">
+                @if (allTeams != null)
+                {
+                    foreach (var t in allTeams)
+                    {
+                        <a asp-controller="Home" asp-action="Squads" asp-route-team="@t.Name" class="team-btn @(ViewBag.SelectedTeam == t.Name ? "active" : "")" data-team-name="@t.Name">
+                            <div class="team-btn-content">
+                                <img src="@t.FlagUrl" class="team-mini-flag">
+                                <span>@t.Name</span>
+                            </div>
+                            <i class="bi bi-chevron-right small opacity-30" style="font-size: 10px;"></i>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="position-grid">
+
+            <div class="position-card">
+                <div class="position-header">
+                    <span class="position-title" style="color: #f59e0b;"><i class="bi bi-shield-lock-fill me-1.5"></i>Kaleciler (GK)</span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1 rounded-pill" style="font-size: 10px;">@Model.Goalkeepers.Count Oyuncu</span>
+                </div>
+                <div class="players-container-box">
+                    @foreach (var p in Model.Goalkeepers)
+                    {
+                        <div class="player-row">
+                            <div class="player-left">
+                                <span class="player-number">#@p.Number</span>
+                                <span class="player-name" title="@p.Name">@p.Name</span>
+                            </div>
+                            <span class="player-dob">@p.DateOfBirth</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="position-card">
+                <div class="position-header">
+                    <span class="position-title" style="color: #3b82f6;"><i class="bi bi-shield-shaded me-1.5"></i>Defans (DF)</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill" style="font-size: 10px;">@Model.Defenders.Count Oyuncu</span>
+                </div>
+                <div class="players-container-box">
+                    @foreach (var p in Model.Defenders)
+                    {
+                        <div class="player-row">
+                            <div class="player-left">
+                                <span class="player-number">#@p.Number</span>
+                                <span class="player-name" title="@p.Name">@p.Name</span>
+                            </div>
+                            <span class="player-dob">@p.DateOfBirth</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="position-card">
+                <div class="position-header">
+                    <span class="position-title" style="color: #10b981;"><i class="bi bi-suit-club-fill me-1.5"></i>Orta Saha (MF)</span>
+                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-pill" style="font-size: 10px;">@Model.Midfielders.Count Oyuncu</span>
+                </div>
+                <div class="players-container-box">
+                    @foreach (var p in Model.Midfielders)
+                    {
+                        <div class="player-row">
+                            <div class="player-left">
+                                <span class="player-number">#@p.Number</span>
+                                <span class="player-name" title="@p.Name">@p.Name</span>
+                            </div>
+                            <span class="player-dob">@p.DateOfBirth</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="position-card">
+                <div class="position-header">
+                    <span class="position-title" style="color: #ef4444;"><i class="bi bi-lightning-charge-fill me-1.5"></i>Forvet (FW)</span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-pill" style="font-size: 10px;">@Model.Forwards.Count Oyuncu</span>
+                </div>
+                <div class="players-container-box">
+                    @foreach (var p in Model.Forwards)
+                    {
+                        <div class="player-row">
+                            <div class="player-left">
+                                <span class="player-number">#@p.Number</span>
+                                <span class="player-name" title="@p.Name">@p.Name</span>
+                            </div>
+                            <span class="player-dob">@p.DateOfBirth</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('teamSearch').addEventListener('input', function (e) {
+        const searchText = e.target.value.toLowerCase();
+        const teamButtons = document.querySelectorAll('#teamList .team-btn');
+
+        teamButtons.forEach(function (btn) {
+            const teamName = btn.getAttribute('data-team-name').toLowerCase();
+            if (teamName.includes(searchText)) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
+        });
+    });
+</script>

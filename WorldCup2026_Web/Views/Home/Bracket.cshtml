@@ -1,0 +1,430 @@
+﻿@model WorldCup2026_Web.Models.BracketResultViewModel
+
+@{
+    ViewData["Title"] = "AI Bracket Simülatörü";
+}
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    body {
+        background-color: #080c14 !important;
+        color: #ffffff;
+    }
+
+    .text-neon {
+        color: #00f2fe;
+        text-shadow: 0 0 8px rgba(0, 242, 254, 0.3);
+    }
+
+    .bracket-arena {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 40px 20px;
+        min-width: 1000px;
+    }
+
+    .bracket-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        height: 650px;
+        flex: 1;
+    }
+
+    .bracket-match-box {
+        background: #141d30;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 10px 14px;
+        width: 100%;
+        max-width: 200px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: all 0.25s ease;
+    }
+
+        .bracket-match-box:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+        }
+
+    .slot-team {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 4px 0;
+        color: #a0aec0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .slot-team .team-name-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .slot-team.winner {
+            color: #00f2fe !important;
+            text-shadow: 0 0 6px rgba(0, 242, 254, 0.2);
+        }
+
+    .bracket-mini-flag {
+        width: 20px;
+        height: 14px;
+        object-fit: cover;
+        border-radius: 2px;
+        border: 1px solid rgba(255,255,255,0.1);
+        flex-shrink: 0;
+    }
+
+    .champion-podium {
+        background: linear-gradient(135deg, #1b2742 0%, #0f1624 100%);
+        border: 2px solid #ffd700;
+        box-shadow: 0 0 25px rgba(246, 166, 35, 0.2);
+        border-radius: 20px;
+        padding: 24px;
+        text-align: center;
+        max-width: 220px;
+        align-self: center;
+    }
+
+    .btn-simulate-neon {
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        color: #080c14;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);
+        transition: all 0.2s;
+    }
+
+        .btn-simulate-neon:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.5);
+            color: #080c14;
+        }
+</style>
+
+@functions {
+    public string GetFlagCode(string teamName)
+    {
+        if (string.IsNullOrEmpty(teamName)) return "un";
+        return teamName.ToLower() switch
+        {
+            "meksika" => "mx",
+            "güney afrika" => "za",
+            "güney kore" => "kr",
+            "çek cumhuriyeti" => "cz",
+            "kanada" => "ca",
+            "bosna-hersek" => "ba",
+            "katar" => "qa",
+            "isviçre" => "ch",
+            "brezilya" => "br",
+            "fas" => "ma",
+            "haiti" => "ht",
+            "iskoçya" => "gb-sct",
+            "amerika birleşik devletleri" => "us",
+            "paraguay" => "py",
+            "avustralya" => "au",
+            "türkiye" => "tr",
+            "almanya" => "de",
+            "hollanda" => "nl",
+            "ingiltere" => "gb-eng",
+            "fransa" => "fr",
+            "arjantin" => "ar",
+            "portekiz" => "pt",
+            "ispanya" => "es",
+            "italya" => "it",
+            "belçika" => "be",
+            "uruguay" => "uy",
+            "hırvatistan" => "hr",
+            "kolombiya" => "co",
+            _ => "un"
+        };
+    }
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary border-opacity-10 pb-3">
+        <div>
+            <h3 class="fw-bold text-white m-0">
+                <i class="bi bi-diagram-3-fill text-neon me-2"></i> AI 48'li Dünya Kupası Simülatörü
+            </h3>
+            <p class="text-muted small m-0 mt-1">Yapay zeka 12 gruptan önce Son 32'yi filtreler, ardından kupa şampiyonunu hesaplar</p>
+        </div>
+
+        <form asp-controller="Home" asp-action="SimulateBracket" method="post">
+            <button type="submit" class="btn btn-simulate-neon text-uppercase">
+                <i class="bi bi-lightning-charge-fill"></i> Turnuvayı Komple Simüle Et
+            </button>
+        </form>
+    </div>
+
+    @if (Model.IsSimulated)
+    {
+        <div class="alert bg-info bg-opacity-10 border border-info border-opacity-20 text-info small mb-4 py-2.5 rounded-3">
+            <i class="bi bi-info-circle-fill me-1.5"></i> <strong>Simülasyon Başarılı:</strong> 48 takımlık grup aşaması elendi, en iyi 32 takım çarpıştı ve filtrelenen <strong>Son 16</strong> listesi ağaca yerleştirildi!
+        </div>
+    }
+
+    <div class="table-responsive" style="border-radius: 24px;">
+        <div class="bracket-arena">
+
+            <div class="bracket-column">
+                @for (int i = 0; i < 8; i += 2)
+                {
+                    bool isSim = Model.IsSimulated;
+                    string t1 = Model.RoundOf16Teams[i];
+                    string t2 = Model.RoundOf16Teams[i + 1];
+                    bool w1 = isSim && Model.QuarterTeams.Contains(t1);
+                    bool w2 = isSim && Model.QuarterTeams.Contains(t2);
+
+                    <div class="bracket-match-box">
+                        <div class="slot-team @(w1 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(t1)).png" class="bracket-mini-flag" onerror="this.style.display='none'">
+                                <span>@t1</span>
+                            </div>
+                            @(w1 ? "✓" : "")
+                        </div>
+                        <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                        <div class="slot-team @(w2 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(t2)).png" class="bracket-mini-flag" onerror="this.style.display='none'">
+                                <span>@t2</span>
+                            </div>
+                            @(w2 ? "✓" : "")
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="bracket-column">
+                @for (int i = 0; i < 4; i += 2)
+                {
+                    string t1 = Model.IsSimulated ? Model.QuarterTeams[i] : "Çeyrek Finalist";
+                    string t2 = Model.IsSimulated ? Model.QuarterTeams[i + 1] : "Çeyrek Finalist";
+                    bool w1 = Model.IsSimulated && Model.SemiTeams.Contains(t1);
+                    bool w2 = Model.IsSimulated && Model.SemiTeams.Contains(t2);
+
+                    <div class="bracket-match-box">
+                        <div class="slot-team @(w1 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t1)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t1</span>
+                            </div>
+                            @(w1 ? "✓" : "")
+                        </div>
+                        <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                        <div class="slot-team @(w2 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t2)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t2</span>
+                            </div>
+                            @(w2 ? "✓" : "")
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="bracket-column">
+                @for (int i = 0; i < 2; i += 2)
+                {
+                    string t1 = Model.IsSimulated ? Model.SemiTeams[i] : "Yarı Finalist";
+                    string t2 = Model.IsSimulated ? Model.SemiTeams[i + 1] : "Yarı Finalist";
+                    bool w1 = Model.IsSimulated && Model.FinalTeams.Contains(t1);
+                    bool w2 = Model.IsSimulated && Model.FinalTeams.Contains(t2);
+
+                    <div class="bracket-match-box">
+                        <div class="slot-team @(w1 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t1)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t1</span>
+                            </div>
+                            @(w1 ? "✓" : "")
+                        </div>
+                        <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                        <div class="slot-team @(w2 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t2)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t2</span>
+                            </div>
+                            @(w2 ? "✓" : "")
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="champion-podium">
+                <div class="text-warning mb-2" style="font-size: 2.2rem;"><i class="bi bi-trophy-fill"></i></div>
+                <h6 class="text-muted text-uppercase fw-bold small tracking-wider mb-1" style="font-size: 0.7rem;">2026 DÜNYA ŞAMPİYONU</h6>
+                <div class="fw-black fs-4 text-white d-flex flex-column align-items-center gap-2" style="text-shadow: 0 0 10px rgba(255,215,0,0.3);">
+                    @if (Model.IsSimulated)
+                    {
+                        <img src="https://flagcdn.com/w80/@(GetFlagCode(Model.Champion)).png" class="rounded shadow border border-warning border-opacity-30 mb-1" style="width: 50px; height: 34px; object-fit: cover;">
+                        <span class="text-warning">@Model.Champion</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted fs-6">Bekleniyor...</span>
+                    }
+                </div>
+                @if (Model.IsSimulated)
+                {
+                    <span class="badge bg-warning text-dark fw-bold rounded-pill px-3 py-1 mt-3" style="font-size: 0.65rem;">AI MATRIX TASTİK ETTİ</span>
+                }
+            </div>
+
+            <div class="bracket-column">
+                @{
+                    string f1 = Model.IsSimulated ? Model.FinalTeams[0] : "Finalist A";
+                    string f2 = Model.IsSimulated ? Model.FinalTeams[1] : "Finalist B";
+                    bool fw1 = Model.IsSimulated && Model.Champion == f1;
+                    bool fw2 = Model.IsSimulated && Model.Champion == f2;
+                }
+                <div class="bracket-match-box" style="border-color: rgba(246, 166, 35, 0.2); ">
+                    <div class="slot-team @(fw1 ? "winner" : "")">
+                        <div class="team-name-wrapper">
+                            @if (Model.IsSimulated)
+                            {
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(f1)).png" class="bracket-mini-flag">
+                            }
+                            <span>@f1</span>
+                        </div>
+                        @(fw1 ? "✓" : "")
+                    </div>
+                    <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                    <div class="slot-team @(fw2 ? "winner" : "")">
+                        <div class="team-name-wrapper">
+                            @if (Model.IsSimulated)
+                            {
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(f2)).png" class="bracket-mini-flag">
+                            }
+                            <span>@f2</span>
+                        </div>
+                        @(fw2 ? "✓" : "")
+                    </div>
+                </div>
+            </div>
+
+            <div class="bracket-column">
+                @for (int i = 4; i < 8; i += 2)
+                {
+                    string t1 = Model.IsSimulated ? Model.QuarterTeams[i] : "Çeyrek Finalist";
+                    string t2 = Model.IsSimulated ? Model.QuarterTeams[i + 1] : "Çeyrek Finalist";
+                    bool w1 = Model.IsSimulated && Model.SemiTeams.Contains(t1);
+                    bool w2 = Model.IsSimulated && Model.SemiTeams.Contains(t2);
+
+                    <div class="bracket-match-box">
+                        <div class="slot-team @(w1 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t1)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t1</span>
+                            </div>
+                            @(w1 ? "✓" : "")
+                        </div>
+                        <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                        <div class="slot-team @(w2 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                @if (Model.IsSimulated)
+                                {
+                                    <img src="https://flagcdn.com/w40/@(GetFlagCode(t2)).png" class="bracket-mini-flag">
+                                }
+                                <span>@t2</span>
+                            </div>
+                            @(w2 ? "✓" : "")
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="bracket-column">
+                @for (int i = 8; i < 16; i += 2)
+                {
+                    string t1 = Model.RoundOf16Teams[i];
+                    string t2 = Model.RoundOf16Teams[i + 1];
+                    bool w1 = Model.IsSimulated && Model.QuarterTeams.Contains(t1);
+                    bool w2 = Model.IsSimulated && Model.QuarterTeams.Contains(t2);
+
+                    <div class="bracket-match-box">
+                        <div class="slot-team @(w1 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(t1)).png" class="bracket-mini-flag" onerror="this.style.display='none'">
+                                <span>@t1</span>
+                            </div>
+                            @(w1 ? "✓" : "")
+                        </div>
+                        <div class="border-top border-secondary border-opacity-10 my-1"></div>
+                        <div class="slot-team @(w2 ? "winner" : "")">
+                            <div class="team-name-wrapper">
+                                <img src="https://flagcdn.com/w40/@(GetFlagCode(t2)).png" class="bracket-mini-flag" onerror="this.style.display='none'">
+                                <span>@t2</span>
+                            </div>
+                            @(w2 ? "✓" : "")
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>

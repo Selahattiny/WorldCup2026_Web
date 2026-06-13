@@ -1,0 +1,165 @@
+﻿@inject WorldCup2026_Web.Data.AppDbContext _context
+@using Microsoft.EntityFrameworkCore
+
+@{
+    // Üst şerit için veritabanından SADECE oynanmamış (yaklaşan) maçları dinamik olarak çekiyoruz
+    var tickerMatches = await _context.Matches
+        .AsNoTracking()
+        .Where(m => m.MatchDate > DateTime.Now) // Oynanmış maçları SQL sorgusunda eler
+        .Include(m => m.HomeTeam)
+        .Include(m => m.AwayTeam)
+        .OrderBy(m => m.MatchDate)
+        .ToListAsync();
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WorldCup 2026</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #080c14;
+            color: #f8f9fa;
+            overflow-x: hidden;
+        }
+        /* Üst Kayan Maç Şeridi (Ticker) */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: #0f1624;
+            border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+            padding: 10px 0;
+        }
+
+        .ticker {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee 30s linear infinite;
+        }
+
+            .ticker:hover {
+                animation-play-state: paused;
+            }
+
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 30px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        .ticker-neon {
+            color: #00f2fe;
+            font-weight: bold;
+        }
+
+        @@keyframes marquee {
+            0% {
+                transform: translate3d(0, 0, 0);
+            }
+
+            100% {
+                transform: translate3d(-50%, 0, 0);
+            }
+        }
+        /* Sol Navigasyon */
+        .sidebar-nav {
+            background: #0f1624;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            min-height: calc(100vh - 45px);
+        }
+
+        .nav-link-custom {
+            color: #a0aec0;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+            .nav-link-custom:hover, .nav-link-custom.active {
+                background: rgba(0, 242, 254, 0.08);
+                color: #00f2fe;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            @if (tickerMatches != null && tickerMatches.Any())
+            {
+                // Şeridin sonsuz döngüde kırılmadan akması için listeyi iki kez döndürüyoruz
+                @for (int i = 0; i < 2; i++)
+                {
+                    foreach (var match in tickerMatches)
+                    {
+                        <div class="ticker-item">
+                            @if (match.Stage?.ToLower() == "group")
+                            {
+                                <span class="ticker-neon me-1">GRUP @match.HomeTeam?.GroupName:</span>
+                            }
+                            else
+                            {
+                                <span class="ticker-neon text-warning me-1">@match.Stage?.ToUpper():</span>
+                            }
+                            
+                            <span>@match.HomeTeam?.Name</span>
+                            <img src="@match.HomeTeam?.FlagUrl" class="mx-1.5" style="width:20px; height:13px; object-fit:cover; border-radius:2px;">
+                            <span class="text-white fw-bold">VS</span>
+                            <img src="@match.AwayTeam?.FlagUrl" class="mx-1.5" style="width:20px; height:13px; object-fit:cover; border-radius:2px;">
+                            <span>@match.AwayTeam?.Name</span>
+                            <span class="badge bg-dark text-neon ms-2" style="font-size:0.7rem;">@match.MatchDate.ToString("dd MMM - HH:mm").ToUpper()</span>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                <div class="ticker-item text-muted">Yaklaşan aktif turnuva maçı bulunmuyor.</div>
+            }
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 p-3 sidebar-nav d-none d-md-block">
+                <div class="px-3 py-2 mb-4">
+                    <h5 class="fw-bold text-white m-0" style="letter-spacing: 1px;">🏆 WC <span style="color:#00f2fe;">2026</span></h5>
+                </div>
+                <div class="d-flex flex-column gap-1">
+                    <a asp-controller="Home" asp-action="Index" class="nav-link-custom active"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    <a asp-controller="Home" asp-action="Groups" class="nav-link-custom"><i class="bi bi-grid-3x3-gap"></i> Gruplar</a>
+                    <a asp-controller="Home" asp-action="Squads" class="nav-link-custom"><i class="bi bi-people-fill text-warning"></i> Kadrolar</a>
+                    <a asp-controller="Home" asp-action="Stadiums" class="nav-link-custom"><i class="bi bi-geo-alt-fill text-danger"></i> Stadyumlar & Şehirler</a>
+                    <a asp-controller="Home" asp-action="TotalFixture" class="nav-link-custom"><i class="bi bi-calendar3"></i> Tüm Fikstür</a>                     
+                    <a asp-controller="Home" asp-action="Anecdotes" class="nav-link-custom"><i class="bi bi-journal-text"></i> Tarih & Anektotlar</a>
+                    <a asp-controller="Home" asp-action="AiPredictor" class="nav-link-custom"><i class="bi bi-cpu text-info"></i> AI Kahin</a>
+                    <a asp-controller="Home" asp-action="Bracket" class="nav-link-custom"><i class="bi bi-diagram-3-fill text-info"></i> AI Bracket Simülatörü</a>
+                    <a asp-controller="Home" asp-action="TacticalHub" class="nav-link-custom"> <i class="bi bi-controller text-info"></i> AI Taktik Düellosu</a>
+                </div>
+            </div>
+
+            <div class="col-md-10 p-4">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

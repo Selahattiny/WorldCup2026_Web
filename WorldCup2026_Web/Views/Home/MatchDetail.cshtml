@@ -1,0 +1,860 @@
+﻿@model WorldCup2026_Web.Models.Match
+
+@{
+    ViewData["Title"] = $"{Model.HomeTeam?.Name} - {Model.AwayTeam?.Name} Maç Detayı";
+    var detailedAnalysis = ViewBag.DetailedAiAnalysis as string ?? "Yapay zeka analizi hazırlanıyor...";
+    bool isFinished = Model.MatchDate < DateTime.Now;
+
+    // Yüzdeleri ve favoriyi tamamen dinamik ve veritabanı/ViewBag uyumlu hale getiriyoruz
+    int homePct = ViewBag.HomePct ?? 50;
+    int awayPct = ViewBag.AwayPct ?? 50;
+
+    string predictedWinner = homePct >= awayPct ? (Model.HomeTeam?.Name ?? "Ev Sahibi") : (Model.AwayTeam?.Name ?? "Deplasman");
+    int favPct = Math.Max(homePct, awayPct);
+}
+
+<style>
+    /* ══════════════════════════════════════
+         GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+       ══════════════════════════════════════ */
+
+    /* 1. Tüm sayfanın kaydırma çubuğu genişliği */
+    ::-webkit-scrollbar {
+        width: 10px; /* Dikey scroll genişliği */
+        height: 10px; /* Yatay scroll yüksekliği */
+    }
+
+    /* 2. Kaydırma çubuğunun arkasındaki ray/arka plan (Track) */
+    ::-webkit-scrollbar-track {
+        background: #0b111e; /* Dashboard arka plan renginizle tam uyumlu koyu ton */
+        border-left: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* 3. Tutup aşağı yukarı kaydırdığımız hareketli çubuk (Thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Kart sınırları tonunda koyu gri */
+        border-radius: 20px; /* Yuvarlak, modern köşeler */
+        border: 2px solid #0b111e; /* Ray ile çubuk arasında boşluk hissi yaratır */
+        transition: background 0.2s;
+    }
+
+        /* 4. Çubuğun üzerine fareyle gelindiğindeki hali (Hover) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00c6ff; /* Temanızdaki o şık neon mavi renk! */
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+        }
+
+    /* Standart tarayıcılar (Firefox vb.) için modern scrollbar desteği */
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: #1e293b #0b111e;
+    }
+    /* ══════════════════════════════════════
+           SAYFA
+       ══════════════════════════════════════ */
+    .detail-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding-bottom: 48px;
+    }
+
+    .detail-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #00c6ff;
+        text-decoration: none;
+        margin-bottom: 20px;
+        transition: gap 0.15s;
+    }
+
+        .detail-back:hover {
+            gap: 9px;
+            color: #00c6ff;
+        }
+
+    /* ══════════════════════════════════════
+           ANA KART
+       ══════════════════════════════════════ */
+    .detail-card {
+        background: #0f1624;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .detail-card::before {
+            content: "";
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(0, 198, 255, 0.07) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    /* ══════════════════════════════════════
+           ÜST ŞERİT — Stage + Canlı durum
+       ══════════════════════════════════════ */
+    .detail-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 32px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        z-index: 1;
+    }
+
+    .topbar-stage {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        background: rgba(0, 198, 255, 0.08);
+        border: 1px solid rgba(0, 198, 255, 0.2);
+        color: #00c6ff;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    .topbar-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+        .topbar-status.upcoming {
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .topbar-status.finished {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+    .topbar-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-dot {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.4;
+            transform: scale(0.7);
+        }
+    }
+
+    /* ══════════════════════════════════════
+           MAÇ BAŞLIK BÖLÜMÜ
+       ══════════════════════════════════════ */
+    .matchup-section {
+        padding: 36px 32px 28px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        z-index: 1;
+    }
+
+    .matchup-grid {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 26px;
+    }
+
+    /* Takım blokları */
+    .matchup-team {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .matchup-flag-wrap {
+        position: relative;
+    }
+
+    .matchup-flag {
+        width: 80px;
+        height: 54px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    .matchup-flag-wrap.is-favorite::after {
+        content: "\f6b9";
+        font-family: "bootstrap-icons";
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f6a623, #ea580c);
+        color: #050a14;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(246, 166, 35, 0.4);
+        border: 2px solid #0f1624;
+    }
+
+    .matchup-team-name {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .matchup-group-tag {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #6b7a99;
+        padding: 3px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+    }
+
+    /* Orta blok */
+    .matchup-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        min-width: 140px;
+    }
+
+    .matchup-vs {
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1;
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .matchup-date {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #4a5568;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+        .matchup-date i {
+            color: #00c6ff;
+            font-size: 11px;
+        }
+
+        .matchup-date.is-past {
+            text-decoration: line-through;
+            color: #2d3748;
+        }
+
+            .matchup-date.is-past i {
+                color: #2d3748;
+            }
+
+    /* ══════════════════════════════════════
+           AI GÜÇ DENGESİ — Yüzde Çubuğu
+       ══════════════════════════════════════ */
+    .power-section {
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 18px 22px;
+    }
+
+    .power-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .power-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: #4a5568;
+    }
+
+        .power-label i {
+            color: #00c6ff;
+        }
+
+    .power-favorite-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(246, 166, 35, 0.1);
+        border: 1px solid rgba(246, 166, 35, 0.22);
+        color: #f6a623;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+
+    .power-bar-row {
+        display: grid;
+        grid-template-columns: 56px 1fr 56px;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .power-pct {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+    }
+
+        .power-pct.home {
+            color: #00c6ff;
+        }
+
+        .power-pct.away {
+            color: #ff4d6d;
+        }
+
+    .power-track {
+        position: relative;
+        height: 12px;
+        background: #0a0f1c;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        display: flex;
+    }
+
+    .power-fill-home {
+        background: linear-gradient(90deg, #0072ff, #00c6ff);
+        height: 100%;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .power-fill-away {
+        background: linear-gradient(90deg, #ff9a44, #ff4d6d);
+        height: 100%;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .power-fill-home::after,
+        .power-fill-away::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+            animation: shimmer 2.5s ease-in-out infinite;
+        }
+
+    @@keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .power-names {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    /* ══════════════════════════════════════
+           İÇERİK BÖLÜMÜ
+       ══════════════════════════════════════ */
+    .detail-body {
+        padding: 28px 32px 32px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Info chip grid: stadyum + ek bilgiler */
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .info-chip {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 16px 18px;
+        transition: border-color 0.2s;
+    }
+
+        .info-chip:hover {
+            border-color: rgba(0, 198, 255, 0.18);
+        }
+
+    .info-chip-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+        .info-chip-icon.red {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.18);
+            color: #ef4444;
+        }
+
+        .info-chip-icon.blue {
+            background: rgba(0, 198, 255, 0.08);
+            border: 1px solid rgba(0, 198, 255, 0.18);
+            color: #00c6ff;
+        }
+
+        .info-chip-icon.purple {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.18);
+            color: #a78bfa;
+        }
+
+    .info-chip-text {
+        min-width: 0;
+    }
+
+    .info-chip-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .info-chip-sub {
+        font-size: 11px;
+        color: #4a5568;
+        margin: 2px 0 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* AI Rapor başlık */
+    .ai-report-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .ai-report-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: rgba(0, 198, 255, 0.1);
+        border: 1px solid rgba(0, 198, 255, 0.2);
+        color: #00c6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .ai-report-title-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ai-report-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .ai-report-model {
+        font-size: 11px;
+        color: #3a4255;
+        margin: 1px 0 0;
+        font-weight: 500;
+    }
+
+    .ai-report-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(167, 139, 250, 0.1);
+        border: 1px solid rgba(167, 139, 250, 0.22);
+        color: #a78bfa;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 20px;
+        flex-shrink: 0;
+    }
+
+    /* AI Rapor kutusu */
+    .ai-report-box {
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.04), rgba(167, 139, 250, 0.03));
+        border: 1px solid rgba(0, 198, 255, 0.1);
+        border-radius: 16px;
+        padding: 26px;
+        position: relative;
+    }
+
+        .ai-report-box::before {
+            content: "\201C";
+            position: absolute;
+            top: 6px;
+            left: 18px;
+            font-size: 40px;
+            color: rgba(0, 198, 255, 0.15);
+            line-height: 1;
+            font-family: Georgia, serif;
+        }
+
+    .ai-report-text {
+        font-size: 14.5px;
+        line-height: 1.85;
+        color: #b8c2d8;
+        margin: 0;
+        white-space: pre-line;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Alt: AI metrikleri */
+    .ai-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .ai-metric-box {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 12px;
+        padding: 12px 14px;
+        text-align: center;
+    }
+
+    .ai-metric-value {
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 3px;
+    }
+
+        .ai-metric-value style="color:#00c6ff;" {
+            color: #00c6ff;
+        }
+
+        .ai-metric-value style="color:#ff4d6d;" {
+            color: #ff4d6d;
+        }
+
+    .ai-metric-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════
+           RESPONSIVE
+       ══════════════════════════════════════ */
+    @@media (max-width: 720px) {
+        .matchup-grid {
+            grid-template-columns: 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .matchup-center {
+            order: -1;
+            min-width: unset;
+        }
+
+        .matchup-vs {
+            font-size: 28px;
+        }
+
+        .matchup-section {
+            padding: 28px 20px 22px;
+        }
+
+        .detail-body {
+            padding: 22px 20px 26px;
+        }
+
+        .detail-topbar {
+            padding: 14px 20px;
+        }
+
+        .matchup-flag {
+            width: 64px;
+            height: 44px;
+        }
+
+        .matchup-team-name {
+            font-size: 16px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .power-bar-row {
+            grid-template-columns: 44px 1fr 44px;
+        }
+
+        .power-pct {
+            font-size: 18px;
+        }
+
+        .ai-metrics {
+            grid-template-columns: 1fr 1fr;
+        }
+
+            .ai-metrics .ai-metric-box:last-child {
+                grid-column: 1 / -1;
+            }
+    }
+</style>
+
+<div class="container mt-5 detail-page">
+
+    <a asp-controller="Home" asp-action="AiPredictor" class="detail-back">
+        <i class="bi bi-arrow-left"></i> Kahin Merkezine Geri Dön
+    </a>
+
+    <div class="detail-card">
+
+        <div class="detail-topbar">
+            <span class="topbar-stage">
+                <i class="bi bi-trophy-fill" style="font-size:9px;"></i>
+                @Model.Stage?.ToUpper()
+            </span>
+            @if (isFinished)
+            {
+                <span class="topbar-status finished">
+                    <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
+                    Maç Oynandı
+                </span>
+            }
+            else
+            {
+                <span class="topbar-status upcoming">
+                    <span class="topbar-dot"></span>
+                    Yaklaşan Maç
+                </span>
+            }
+        </div>
+
+        <div class="matchup-section">
+            <div class="matchup-grid">
+
+                <div class="matchup-team">
+                    <div class="matchup-flag-wrap @(homePct >= awayPct ? "is-favorite" : "")">
+                        <img src="@Model.HomeTeam?.FlagUrl"
+                             class="matchup-flag"
+                             alt="@Model.HomeTeam?.Name"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <h2 class="matchup-team-name">@Model.HomeTeam?.Name</h2>
+                    @if (Model.HomeTeam != null)
+                    {
+                        <span class="matchup-group-tag">Grup @Model.HomeTeam.GroupName</span>
+                    }
+                </div>
+
+                <div class="matchup-center">
+                    <div class="matchup-vs">VS</div>
+                    <div class="matchup-date @(isFinished ? "is-past" : "")">
+                        <i class="bi bi-calendar3"></i>
+                        @Model.MatchDate.ToString("dd.MM.yyyy HH:mm dddd")
+                    </div>
+                </div>
+
+                <div class="matchup-team">
+                    <div class="matchup-flag-wrap @(awayPct > homePct ? "is-favorite" : "")">
+                        <img src="@Model.AwayTeam?.FlagUrl"
+                             class="matchup-flag"
+                             alt="@Model.AwayTeam?.Name"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <h2 class="matchup-team-name">@Model.AwayTeam?.Name</h2>
+                    @if (Model.AwayTeam != null)
+                    {
+                        <span class="matchup-group-tag">Grup @Model.AwayTeam.GroupName</span>
+                    }
+                </div>
+
+            </div>
+
+            <div class="power-section">
+                <div class="power-header">
+                    <span class="power-label">
+                        <i class="bi bi-cpu-fill"></i>
+                        AI Güç Dengesi
+                    </span>
+                    <span class="power-favorite-tag">
+                        <i class="bi bi-star-fill" style="font-size:9px;"></i>
+                        Favori: @predictedWinner
+                    </span>
+                </div>
+
+                <div class="power-bar-row">
+                    <div class="power-pct home">%@homePct</div>
+                    <div class="power-track">
+                        <div class="power-fill-home" style="width: @homePct%"></div>
+                        <div class="power-fill-away" style="width: @awayPct%"></div>
+                    </div>
+                    <div class="power-pct away">%@awayPct</div>
+                </div>
+
+                <div class="power-names">
+                    <span>@Model.HomeTeam?.Name</span>
+                    <span>@Model.AwayTeam?.Name</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-body">
+
+            <div class="info-grid">
+                <div class="info-chip">
+                    <div class="info-chip-icon red">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div class="info-chip-text">
+                        <p class="info-chip-title">@Model.Stadium?.Name</p>
+                        <p class="info-chip-sub">Turnuva Ev Sahibi Şehir Stadyumu</p>
+                    </div>
+                </div>
+
+                <div class="info-chip">
+                    <div class="info-chip-icon blue">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="info-chip-text">
+                        <p class="info-chip-title">@Model.MatchDate.ToString("HH:mm")</p>
+                        <p class="info-chip-sub">Türkiye Saati (TSİ)</p>
+                    </div>
+                </div>
+
+                <div class="info-chip">
+                    <div class="info-chip-icon purple">
+                        <i class="bi bi-shield-shaded"></i>
+                    </div>
+                    <div class="info-chip-text">
+                        <p class="info-chip-title">Grup @Model.HomeTeam?.GroupName</p>
+                        <p class="info-chip-sub">Grup Aşaması Karşılaşması</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-report-header">
+                <div class="ai-report-icon">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+                <div class="ai-report-title-wrap">
+                    <h3 class="ai-report-title">Llama 3.1 Taktiksel İstihbarat Raporu</h3>
+                    <p class="ai-report-model">Groq • Llama-3.1 motoru tarafından üretildi</p>
+                </div>
+                <span class="ai-report-badge">
+                    <i class="bi bi-stars" style="font-size:9px;"></i>
+                    AI Üretimi
+                </span>
+            </div>
+
+            <div class="ai-report-box">
+                <div class="ai-report-text">@detailedAnalysis</div>
+
+                <div class="ai-metrics">
+                    <div class="ai-metric-box">
+                        <div class="ai-metric-value" style="color:#00c6ff;">%@homePct</div>
+                        <div class="ai-metric-label">@Model.HomeTeam?.Name Kazanma</div>
+                    </div>
+                    <div class="ai-metric-box">
+                        <div class="ai-metric-value" style="color:#ff4d6d;">%@awayPct</div>
+                        <div class="ai-metric-label">@Model.AwayTeam?.Name Kazanma</div>
+                    </div>
+                    <div class="ai-metric-box">
+                        <div class="ai-metric-value" style="color:#f6a623;">%@favPct</div>
+                        <div class="ai-metric-label">Güven Skoru</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
